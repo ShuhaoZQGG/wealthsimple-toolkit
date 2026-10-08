@@ -1,0 +1,24 @@
+[project]
+name = "wealthsimple-toolkit"
+version = "0.1.0"
+description = "Local-first Wealthsimple holdings overview: per-account weights, aggregates, sector pies"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # Unofficial Wealthsimple API client. Swap for your own fork if needed:
+    # "ws-api @ git+https://github.com/<you>/ws-api-python"
+    "ws-api @ git+https://github.com/gboudreau/ws-api-python",
+]
+
+[project.scripts]
+wst = "wst.cli:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["wst*"]
+
+[tool.setuptools.package-data]
+wst = ["defaults.json"]
