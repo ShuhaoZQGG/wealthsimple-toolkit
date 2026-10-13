@@ -166,6 +166,8 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("login", help="one-time login (WS_USERNAME/WS_PASSWORD/WS_OTP env vars)")
+    p.add_argument("--export-session", metavar="PATH",
+                   help="also write the session JSON to PATH (mode 0600)")
     p.set_defaults(func=cmd_login)
 
     p = sub.add_parser("accounts", help="list accounts")

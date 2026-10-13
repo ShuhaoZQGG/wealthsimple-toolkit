@@ -79,4 +79,16 @@ def cmd_login(args):
         die("Wealthsimple wants a 2FA code: re-run with WS_OTP set.", code=2)
     except ws_api.LoginFailedException as e:
         die(f"login failed: {e}")
-    print(json.dumps({"ok": True, "session": SESSION_FILE}))
+    # Prove the stored session actually works for API calls.
+    api = load_api()
+    n = len(api.get_accounts())
+    if getattr(args, "export_session", None):
+        # Re-read: the API load above may have refreshed the token and re-persisted it.
+        with open(SESSION_FILE) as f:
+            stored = f.read()
+        fd = os.open(args.export_session, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(stored)
+        os.chmod(args.export_session, 0o600)
+        print(f"Session also written to {args.export_session} (mode 0600).")
+    print(json.dumps({"ok": True, "session": SESSION_FILE, "open_accounts": n}))
