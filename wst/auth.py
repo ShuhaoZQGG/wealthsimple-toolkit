@@ -58,25 +58,41 @@ def load_api():
 
 
 def cmd_login(args):
+    from getpass import getpass
+
     ws_api = _lib()
     username = os.environ.get("WS_USERNAME", "").strip()
+    if not username:
+        username = input("Wealthsimple username (email): ").strip()
+    if not username:
+        die("no username given")
     password = os.environ.get("WS_PASSWORD", "")
+    if not password:
+        # getpass, not input(): input() echoes the password to the terminal.
+        password = getpass("Wealthsimple password: ")
     otp = os.environ.get("WS_OTP") or None
-    if not username or not password:
-        die(
-            "set WS_USERNAME and WS_PASSWORD env vars, then re-run. "
-            "Add WS_OTP if Wealthsimple asks for a 2FA code."
-        )
-    try:
+
+    def attempt(otp_answer):
         ws_api.WealthsimpleAPI.login(
             username,
             password,
-            otp,
+            otp_answer,
             persist_session_fct=persist_session,
             scope=READ_ONLY_SCOPE,
         )
+
+    try:
+        attempt(otp)
     except ws_api.OTPRequiredException:
-        die("Wealthsimple wants a 2FA code: re-run with WS_OTP set.", code=2)
+        if otp is not None:
+            die("Wealthsimple wants a 2FA code: re-run with WS_OTP set.", code=2)
+        otp = input("2FA code: ").strip()
+        try:
+            attempt(otp)
+        except ws_api.OTPRequiredException:
+            die("2FA code was rejected or expired.", code=2)
+        except ws_api.LoginFailedException as e:
+            die(f"login failed: {e}")
     except ws_api.LoginFailedException as e:
         die(f"login failed: {e}")
     # Prove the stored session actually works for API calls.
